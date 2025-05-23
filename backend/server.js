@@ -20,15 +20,16 @@ mongoose.connect(process.env.MONGO_URI)
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const userRoutes = require('./routes/user');
+app.use('/api/user', userRoutes);
+
+const recipeRoutes = require('./routes/recipes');
+app.use('/api/recipes', recipeRoutes);
+
 // Rota teste
 app.get('/', (req, res) => {
   res.send('API funcionando!');
 });
-
-
-const userRoutes = require('./routes/user');
-app.use('/api/user', userRoutes);
-
 
 const PORT = process.env.PORT || 5000;
 
