@@ -26,6 +26,11 @@ app.use('/api/user', userRoutes);
 const recipeRoutes = require('./routes/recipes');
 app.use('/api/recipes', recipeRoutes);
 
+const spoonacularRoutes = require('./routes/spoonacular');
+app.use('/api/spoonacular', spoonacularRoutes);
+
+
+
 // Rota teste
 app.get('/', (req, res) => {
   res.send('API funcionando!');
