@@ -5,10 +5,8 @@ function Register() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleRegister = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
@@ -17,9 +15,10 @@ function Register() {
       });
 
       const data = await response.json();
-
       if (response.ok) {
         setMessage('Registro realizado com sucesso!');
+        setEmail('');
+        setPassword('');
       } else {
         setMessage(data.msg || 'Erro ao registrar.');
       }
@@ -29,35 +28,35 @@ function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Registro</h2>
-      <form onSubmit={handleRegister} className="space-y-4">
-        <div>
-          <label className="block font-semibold">Email:</label>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0f172a] text-white px-4">
+      <div className="bg-[#1e293b] p-8 rounded shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
-            required
-            className="w-full border p-2 rounded"
+            placeholder="Email"
+            className="w-full p-3 bg-[#334155] border border-[#475569] rounded text-white placeholder-gray-300"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
-        </div>
-        <div>
-          <label className="block font-semibold">Senha:</label>
           <input
             type="password"
-            required
-            className="w-full border p-2 rounded"
+            placeholder="Senha"
+            className="w-full p-3 bg-[#334155] border border-[#475569] rounded text-white placeholder-gray-300"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
-        </div>
-        <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
-          Registrar
-        </button>
-      </form>
-
-      {message && <div className="mt-4 text-blue-500">{message}</div>}
+          <button
+            type="submit"
+            className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white py-2 px-4 rounded"
+          >
+            Registrar
+          </button>
+        </form>
+        {message && <p className="mt-4 text-center text-blue-400">{message}</p>}
+      </div>
     </div>
   );
 }

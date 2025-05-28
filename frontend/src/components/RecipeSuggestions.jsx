@@ -1,70 +1,128 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function RecipeSuggestions() {
   const [recipes, setRecipes] = useState([]);
-  const [message, setMessage] = useState('');
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const token = localStorage.getItem('token');
 
+  useEffect(() => {
+    fetchRecipes();
+  }, []);
+
   const fetchRecipes = async () => {
-    setMessage('');
     try {
       const response = await fetch('http://localhost:5000/api/recipes/suggest', {
-        headers: { 'x-auth-token': token },
+        headers: {
+          'x-auth-token': token,
+        },
       });
-
       const data = await response.json();
-
       if (response.ok) {
-        setRecipes(data);
+        setRecipes(data || []);
       } else {
-        setMessage(data.msg || 'Erro ao buscar receitas.');
+        setError(data.msg || 'Erro ao buscar receitas.');
       }
     } catch {
-      setMessage('Erro de conexão com o servidor.');
+      setError('Erro de conexão com o servidor.');
     }
   };
 
+  const fetchRecipeDetails = async (id) => {
+    setModalLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/recipes/${id}`, {
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSelectedRecipe(data);
+      } else {
+        setError(data.msg || 'Erro ao carregar detalhes da receita.');
+      }
+    } catch {
+      setError('Erro ao conectar ao servidor.');
+    }
+    setModalLoading(false);
+  };
+
+  const handleRecipeClick = (id) => {
+    fetchRecipeDetails(id);
+  };
+
+  const closeModal = () => setSelectedRecipe(null);
+
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Sugestões de Receitas</h2>
-      <button
-        onClick={fetchRecipes}
-        className="mb-4 bg-purple-500 text-white p-2 rounded hover:bg-purple-600"
-      >
-        Buscar Receitas
-      </button>
+    <div className="min-h-screen bg-gray-900 text-white px-6 py-10">
+      <h1 className="text-3xl font-bold mb-6 text-center">Sugestões de Receitas</h1>
 
-      {message && <div className="text-red-500">{message}</div>}
+      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      <ul className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {recipes.map((recipe) => (
-          <li key={recipe.id} className="border p-4 rounded">
-            <h3 className="text-xl font-semibold">{recipe.title}</h3>
+          <div
+            key={recipe.id}
+            className="bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer hover:bg-gray-700 transition"
+            onClick={() => handleRecipeClick(recipe.id)}
+          >
             <img
               src={recipe.image}
               alt={recipe.title}
-              className="w-full h-40 object-cover rounded mt-2"
+              className="w-full h-40 object-cover rounded mb-4"
             />
-            <div className="mt-2">
-              <strong>Ingredientes que você tem:</strong>
-              <ul className="list-disc ml-6">
-                {recipe.usedIngredients.map((ing) => (
-                  <li key={ing.id}>{ing.name}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="mt-2">
-              <strong>Ingredientes que faltam:</strong>
-              <ul className="list-disc ml-6">
-                {recipe.missedIngredients.map((ing) => (
-                  <li key={ing.id}>{ing.name}</li>
-                ))}
-              </ul>
-            </div>
-          </li>
+            <h2 className="text-lg font-semibold">{recipe.title}</h2>
+          </div>
         ))}
-      </ul>
+      </div>
+
+      {/* Modal */}
+      {selectedRecipe && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
+            <button
+              className="text-white text-xl float-right mb-4"
+              onClick={closeModal}
+            >
+              ×
+            </button>
+
+            {modalLoading ? (
+              <p className="text-center">Carregando detalhes...</p>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-4">{selectedRecipe.title}</h2>
+                <img
+                  src={selectedRecipe.image}
+                  alt={selectedRecipe.title}
+                  className="w-full h-60 object-cover rounded mb-4"
+                />
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold mb-2">Ingredientes:</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    {selectedRecipe.extendedIngredients?.map((ing) => (
+                      <li key={ing.id}>{ing.original}</li>
+                    ))}
+                  </ul>
+                </div>
+                {selectedRecipe.analyzedInstructions?.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Modo de preparo:</h3>
+                    <ol className="list-decimal list-inside space-y-1">
+                      {selectedRecipe.analyzedInstructions[0].steps.map((step) => (
+                        <li key={step.number}>{step.step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
